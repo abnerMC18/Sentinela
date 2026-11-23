@@ -1,73 +1,181 @@
-<!doctype html>
-<html lang="pt-PT">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Centro de Comando - Sentinela das Encostas</title>
-    <link rel="stylesheet" href="css/style.css" />
-
-    <!-- Bibliotecas: Chart.js (Gráficos) e Leaflet (Mapas) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinela das Encostas - Comando Central & IA</title>
+    
+    <!-- Bibliotecas do Mapa (Leaflet) e Gráficos (Chart.js) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  </head>
-  <body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
     <div class="dashboard-container">
-      <!-- Cabeçalho -->
-      <header>
-        <div class="title-area">
-          <h1>SENTINELA DAS ENCOSTAS</h1>
-          <p class="subtitle">CENTRO DE COMANDO IOT GEOLÓGICO</p>
-        </div>
-        <div class="badge-modo">
-          <span class="dot live"></span> Rede Ativa:
-          <span id="sensores-ativos">0</span> Sentinela(s)
-        </div>
-      </header>
+        <!-- Cabeçalho -->
+        <header class="dashboard-header">
+            <h1>📡 COMANDO CENTRAL - SENTINELAS</h1>
+            <p>Monitoramento Geotécnico LoRa, Telemetria & Inteligência Artificial (XAI)</p>
+        </header>
 
-      <!-- Cartões de Visão Geral -->
-      <div class="cards-grid">
-        <div class="card card-temp">
-          <h3>STATUS DA CONSTELAÇÃO</h3>
-          <div class="valor status" id="val-rede">A LIGAR...</div>
-        </div>
-        <div class="card card-umid">
-          <h3>MÉDIA DE UMIDADE (REDE)</h3>
-          <div class="valor" id="val-umid-media">-- %</div>
-        </div>
-        <div class="card card-risco">
-          <h3>ALERTA MÁXIMO GLOBAL</h3>
-          <div class="valor status" id="val-status-global">SEGURO</div>
-        </div>
-      </div>
-
-      <!-- Painel Principal (Mapa + Lista de Sentinelas) -->
-      <div class="main-panel">
-        <div class="map-wrapper">
-          <h3 class="panel-title">TOPOLOGIA DA REDE</h3>
-          <div id="mapa-sentinelas" class="map-container"></div>
+        <!-- 4 Cartões Executivos no Topo -->
+        <div class="cards-grid">
+            <div class="status-card">
+                <h3>REDE ATIVA</h3>
+                <div class="valor" id="sensores-ativos">0</div>
+                <p class="subtitle" id="sub-gateway">Estações Online</p>
+            </div>
+            <div class="status-card">
+                <h3>UMIDADE MÉDIA</h3>
+                <div class="valor" id="val-umid-media">-- %</div>
+                <p class="subtitle">Saturação Média do Solo</p>
+            </div>
+            <div class="status-card">
+                <h3>CONEXÃO</h3>
+                <div class="valor status" id="val-rede">A LIGAR...</div>
+                <p class="subtitle" id="sub-conexao">Gateway USB / API</p>
+            </div>
+            <div class="status-card alerta-card">
+                <h3>ÍNDICE DE RISCO (IA)</h3>
+                <div class="valor status seguro" id="val-status-global">0% • ESTÁVEL</div>
+                <p class="subtitle">Probabilidade Experimental</p>
+            </div>
         </div>
 
-        <div class="sensors-wrapper">
-          <h3 class="panel-title">SENTINELAS EM ÓRBITA</h3>
-          <div class="sensors-list" id="lista-sensores">
-            <!-- Os sensores aparecerão aqui -->
-          </div>
+        <!-- Navegação Organizada em 3 Abas -->
+        <div class="tabs">
+            <button class="tab active" onclick="mudarAba('tempo-real')">1. Centro de Comando & IA</button>
+            <button class="tab" onclick="mudarAba('historico')">2. Histórico & Alertas</button>
+            <button class="tab" onclick="mudarAba('operador')">3. Calibração IA & Rede LoRa</button>
         </div>
-      </div>
 
-      <!-- Área do Gráfico de Telemetria -->
-      <div class="chart-wrapper">
-        <h3 class="panel-title">TELEMETRIA (ÚLTIMO SENSOR ATUALIZADO)</h3>
-        <div class="chart-container">
-          <canvas id="graficoSensores"></canvas>
+        <!-- ========================================================= -->
+        <!-- ABA 1: CENTRO DE COMANDO (MAPA + ESTAÇÕES + IA EXPLICÁVEL) -->
+        <!-- ========================================================= -->
+        <div id="aba-tempo-real" style="display: block;">
+            <div class="main-panel">
+                <div class="map-wrapper">
+                    <h3 class="panel-title">TOPOLOGIA DA REDE (MAPA DE CAMPO)</h3>
+                    <div id="mapa-sentinelas" class="map-container"></div>
+                </div>
+                <div class="sensors-wrapper">
+                    <h3 class="panel-title">SENTINELAS EM ÓRBITA</h3>
+                    <div class="sensors-list" id="lista-sensores"></div>
+                </div>
+            </div>
+
+            <!-- Painel Compacto de IA (XAI + Probabilidades) -->
+            <div class="ia-grid">
+                <div class="card-box">
+                    <div class="box-header">
+                        <h3 class="panel-title" style="margin:0; border:none;">🧠 EXPLICABILIDADE DA IA (XAI)</h3>
+                        <span class="pill-info" id="ia-filtro-status">IsolationForest: Calibrado</span>
+                    </div>
+                    <p class="ia-resumo" id="ia-explicacao">A aguardar telemetria para calcular contribuição das variáveis...</p>
+                    <div class="xai-bars" id="xai-fatores"></div>
+                </div>
+
+                <div class="card-box">
+                    <h3 class="panel-title">PROBABILIDADE POR CLASSE</h3>
+                    <div class="prob-list" id="ia-probabilidades">
+                        <div class="prob-item"><span>Estável</span><div class="bar-bg"><div class="bar-fill seguro" style="width: 90%"></div></div><b>90%</b></div>
+                        <div class="prob-item"><span>Atenção</span><div class="bar-bg"><div class="bar-fill atencao" style="width: 7%"></div></div><b>7%</b></div>
+                        <div class="prob-item"><span>Pré-ruptura</span><div class="bar-bg"><div class="bar-fill alerta" style="width: 2%"></div></div><b>2%</b></div>
+                        <div class="prob-item"><span>Ruptura</span><div class="bar-bg"><div class="bar-fill perigo" style="width: 1%"></div></div><b>1%</b></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico Principal -->
+            <div class="chart-wrapper">
+                <h3 class="panel-title">TELEMETRIA CONTÍNUA (UMIDADE, INCLINAÇÃO & RISCO IA)</h3>
+                <div class="chart-container">
+                    <canvas id="graficoSensores"></canvas>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- ========================================================= -->
+        <!-- ABA 2: HISTÓRICO DE LEITURAS & LOG DE ALERTAS             -->
+        <!-- ========================================================= -->
+        <div id="aba-historico" style="display: none;">
+            <div class="historico-grid">
+                <div class="historico-wrapper">
+                    <div class="box-header">
+                        <h3 class="panel-title" style="margin:0; border:none;">ÚLTIMAS LEITURAS (BANCO DE DADOS)</h3>
+                        <button class="btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+                    </div>
+                    <div style="overflow-x: auto; margin-top: 15px;">
+                        <table class="tabela-escura">
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Est.</th>
+                                    <th>Umidade</th>
+                                    <th>Inclinação</th>
+                                    <th>Vib. Pico</th>
+                                    <th>RSSI</th>
+                                    <th>Risco IA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-historico"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="historico-wrapper">
+                    <h3 class="panel-title">HISTÓRICO DE ALERTAS (MUDANÇA DE NÍVEL)</h3>
+                    <div class="alertas-list" id="lista-alertas">
+                        <p class="muted-text">Nenhuma mudança crítica de nível registada nesta sessão.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- ABA 3: PAINEL DO OPERADOR (CALIBRAÇÃO IA & REDE LORA)     -->
+        <!-- ========================================================= -->
+        <div id="aba-operador" style="display: none;">
+            <div class="operador-grid">
+                <!-- Filtro de Ruído -->
+                <div class="card-box">
+                    <h3 class="panel-title">FILTRO DE RUÍDO AMBIENTAL (ISOLATION FOREST)</h3>
+                    <p class="muted-text" style="margin-bottom: 15px;">Com o estande no ambiente normal e a maquete parada, grava 20 amostras para filtrar vibrações externas.</p>
+                    <button class="btn-op primary" onclick="executarAcaoOperador('Calibrar Ruído do Estande (40s)')">🎙️ Calibrar Ruído do Estande (40s)</button>
+                </div>
+
+                <!-- Ajuste Fino ao Vivo -->
+                <div class="card-box">
+                    <h3 class="panel-title">AJUSTE FINO DA IA AO VIVO</h3>
+                    <p class="muted-text" style="margin-bottom: 15px;">Ensine o modelo com exemplos reais da maquete física em tempo real.</p>
+                    <div class="btn-group">
+                        <button class="btn-op success" onclick="executarAcaoOperador('Gravar Padrão Estável (10s)')">✅ Gravar Padrão Estável (10s)</button>
+                        <button class="btn-op warning" onclick="executarAcaoOperador('Gravar Pré-Deslizamento (10s)')">⚠️ Gravar Pré-Deslizamento (10s)</button>
+                        <button class="btn-op danger" onclick="executarAcaoOperador('Resetar Treino da IA')">↺ Resetar Treino</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback de Operação -->
+            <div id="operador-feedback" class="feedback-bar" style="display: none;"></div>
+
+            <!-- Integridade da Rede LoRa -->
+            <div class="card-box" style="margin-top: 20px;">
+                <h3 class="panel-title">DIAGNÓSTICO DE HARDWARE & INTEGRIDADE DA REDE LORA</h3>
+                <div class="stats-grid-rede">
+                    <div class="stat-mini"><span>Leituras Válidas</span><b id="net-validas">344</b></div>
+                    <div class="stat-mini"><span>Pacotes Gateway</span><b id="net-gateway">347</b></div>
+                    <div class="stat-mini"><span>Erros CRC (Rádio)</span><b id="net-crc">0</b></div>
+                    <div class="stat-mini"><span>Erros Formato</span><b id="net-fmt">0</b></div>
+                    <div class="stat-mini"><span>Clientes Wi-Fi AP</span><b id="net-wifi">0</b></div>
+                    <div class="stat-mini"><span>Consistência Sintética</span><b>99,8% ± 0,1%</b></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/app.js"></script>
-  </body>
+</body>
 </html>
