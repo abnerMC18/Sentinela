@@ -1,77 +1,73 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinela das Encostas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Centro de Comando - Sentinela das Encostas</title>
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Bibliotecas: Chart.js (Gráficos) e Leaflet (Mapas) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
-
-    <header class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center shadow-lg">
-        <div>
-            <h1 class="text-2xl font-bold text-cyan-400 tracking-wider">SENTINELA DAS ENCOSTAS</h1>
-            <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">Monitoramento IoT Geológico</p>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Cabeçalho -->
+      <header>
+        <div class="title-area">
+          <h1>SENTINELA DAS ENCOSTAS</h1>
+          <p class="subtitle">CENTRO DE COMANDO IOT GEOLÓGICO</p>
         </div>
-        <div class="flex items-center space-x-2 bg-gray-900 px-4 py-2 rounded-full border border-gray-700">
-            <span class="h-3 w-3 rounded-full bg-blue-500 animate-pulse-fast"></span>
-            <span class="text-sm font-medium text-gray-300">Modo: <span class="text-blue-400">Modular POO</span></span>
+        <div class="badge-modo">
+          <span class="dot live"></span> Rede Ativa:
+          <span id="sensores-ativos">0</span> Sentinela(s)
         </div>
-    </header>
+      </header>
 
-    <nav class="flex px-6 py-4 space-x-4 bg-gray-800/50">
-        <button id="btn-dashboard" class="px-4 py-2 rounded-md font-medium transition-all duration-200 bg-cyan-600 text-white shadow-[0_0_15px_rgba(8,145,178,0.5)]">
-            Painel em Tempo Real
-        </button>
-        <button id="btn-history" class="px-4 py-2 rounded-md font-medium transition-all duration-200 bg-gray-700 text-gray-400 hover:bg-gray-600">
-            Histórico de Leituras
-        </button>
-    </nav>
+      <!-- Cartões de Visão Geral -->
+      <div class="cards-grid">
+        <div class="card card-temp">
+          <h3>STATUS DA CONSTELAÇÃO</h3>
+          <div class="valor status" id="val-rede">A LIGAR...</div>
+        </div>
+        <div class="card card-umid">
+          <h3>MÉDIA DE UMIDADE (REDE)</h3>
+          <div class="valor" id="val-umid-media">-- %</div>
+        </div>
+        <div class="card card-risco">
+          <h3>ALERTA MÁXIMO GLOBAL</h3>
+          <div class="valor status" id="val-status-global">SEGURO</div>
+        </div>
+      </div>
 
-    <main class="p-6 max-w-7xl mx-auto">
-        <div id="tab-dashboard" class="block">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <!-- Card Temp -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-bl-full"></div>
-                    <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-2">Temperatura</h3>
-                    <div class="text-4xl font-bold text-white"><span id="val-temp">--</span> <span class="text-xl text-blue-400">°C</span></div>
-                </div>
-                <!-- Card Umidade -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full"></div>
-                    <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-2">Umidade do Solo</h3>
-                    <div class="text-4xl font-bold text-white"><span id="val-umidade">--</span> <span class="text-xl text-emerald-400">%</span></div>
-                </div>
-                <!-- Card Risco -->
-                <div id="card-risco" class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl relative overflow-hidden transition-colors duration-500">
-                    <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-2">Risco de Deslizamento</h3>
-                    <div id="val-risco" class="text-4xl font-bold text-gray-400">AGUARDANDO</div>
-                </div>
-            </div>
-            <!-- Gráfico -->
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
-                <div class="relative h-72 w-full"><canvas id="sensorChart"></canvas></div>
-            </div>
+      <!-- Painel Principal (Mapa + Lista de Sentinelas) -->
+      <div class="main-panel">
+        <div class="map-wrapper">
+          <h3 class="panel-title">TOPOLOGIA DA REDE</h3>
+          <div id="mapa-sentinelas" class="map-container"></div>
         </div>
 
-        <!-- Histórico -->
-        <div id="tab-history" class="hidden bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-900 text-cyan-400 uppercase text-xs tracking-wider border-b border-gray-700">
-                    <tr>
-                        <th class="px-6 py-4">Horário</th><th class="px-6 py-4">Temp</th>
-                        <th class="px-6 py-4">Umidade</th><th class="px-6 py-4">Chuva</th><th class="px-6 py-4">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="history-tbody" class="divide-y divide-gray-800"></tbody>
-            </table>
+        <div class="sensors-wrapper">
+          <h3 class="panel-title">SENTINELAS EM ÓRBITA</h3>
+          <div class="sensors-list" id="lista-sensores">
+            <!-- Os sensores aparecerão aqui -->
+          </div>
         </div>
-    </main>
+      </div>
 
-    <!-- Importação do arquivo principal como MÓDULO -->
-    <script type="module" src="js/app.js"></script>
-</body>
+      <!-- Área do Gráfico de Telemetria -->
+      <div class="chart-wrapper">
+        <h3 class="panel-title">TELEMETRIA (ÚLTIMO SENSOR ATUALIZADO)</h3>
+        <div class="chart-container">
+          <canvas id="graficoSensores"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/app.js"></script>
+  </body>
 </html>
